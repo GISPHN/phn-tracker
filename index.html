@@ -12,15 +12,139 @@
   <body>
     <div class="app-shell">
       <aside class="control-panel" aria-label="操作パネル">
-        <header class="brand"><div><p class="eyebrow">奈良県 訓練セッション</p><h1>GIS-PHN Tracker</h1></div><span class="sync-pill" id="connectionState">起動中</span></header>
-        <section class="panel-section mode-section"><button class="primary" id="fieldModeBtn" type="button">現地モード</button><button id="hqModeBtn" type="button">本部モード</button></section>
-        <section class="panel-section field-only"><h2>参加者</h2><div class="field-grid"><label>自治体名<input id="municipalityInput" type="text" value="奈良市" /></label><label>姓<input id="surnameInput" type="text" value="山田" /></label><label>チーム<select id="teamSelect"><option value="team-a">A班 保健師</option><option value="team-b">B班 保健師</option><option value="team-c">C班 保健師</option><option value="hq">本部</option></select></label><label>セッション<input id="sessionInput" type="text" value="nara-training-001" /></label></div></section>
-        <section class="panel-section field-only"><h2>位置送信</h2><div class="track-controls"><button class="primary" id="toggleTracking" type="button">活動開始</button><button id="sendNow" type="button">手動送信</button></div><div class="field-grid"><label>更新間隔<select id="intervalSelect"><option value="30000">30秒</option><option value="60000" selected>1分</option><option value="180000">3分</option><option value="300000">5分</option><option value="0">手動のみ</option></select></label><label>ステータス<select id="statusSelect"><option>移動中</option><option>訪問中</option><option>待機中</option><option>休憩中</option><option>本部帰着</option><option>要連絡</option><option>活動終了</option></select></label></div><p class="hint">Supabase設定時はスマホの位置が本部画面へリアルタイム同期します。</p></section>
-        <section class="panel-section field-only"><h2>メモ</h2><textarea id="memoInput" rows="3" placeholder="例: 避難所へ移動開始。道路混雑あり。"></textarea><div class="track-controls"><button id="saveMemo" type="button">位置付きメモ</button><button id="centerMap" type="button">現在地へ</button></div></section>
-        <section class="panel-section"><h2>本部ビュー</h2><div class="metric-grid"><div><span id="activeCount">0</span><small>活動中</small></div><div><span id="staleCount">0</span><small>要確認</small></div><div><span id="memoCount">0</span><small>メモ</small></div><div><span id="queuedCount">0</span><small>未同期</small></div><div><span id="teamCount">0</span><small>チーム</small></div><div><span id="lastUpdateText">-</span><small>最終更新</small></div></div><div class="field-grid"><label>表示チーム<select id="teamFilter"><option value="all">全チーム</option><option value="team-a">A班 保健師</option><option value="team-b">B班 保健師</option><option value="team-c">C班 保健師</option><option value="hq">本部</option></select></label><label>背景地図<select id="basemapSelect"><option value="osmfj-poi">OSMFJ POI</option><option value="osm-bright">OSM Bright</option><option value="gsi-photo">全国最新写真</option></select></label><label class="checkbox-row"><input id="showTracks" type="checkbox" checked />移動履歴</label><label class="checkbox-row"><input id="showOverturePoi" type="checkbox" />Overture POI</label></div><div class="track-controls"><button id="addDemo" type="button">デモ追加</button><button id="exportCsv" type="button">CSV</button><button id="exportGeojson" type="button">GeoJSON</button><button id="exportSvgmap" type="button">SVGMap</button></div><p class="hint" id="syncHint">Supabase未設定: この端末内のデータのみ表示しています。</p><div class="hq-dashboard"><h2>チーム状況</h2><div id="teamSummaryList" class="summary-list"></div><h2>要確認</h2><div id="staleList" class="summary-list"></div></div></section>
+        <header class="brand">
+          <div>
+            <p class="eyebrow">奈良県 訓練セッション</p>
+            <h1>GIS-PHN Tracker</h1>
+          </div>
+          <span class="sync-pill" id="connectionState">起動中</span>
+        </header>
+
+        <section class="panel-section mode-section">
+          <button class="primary" id="fieldModeBtn" type="button">現地モード</button>
+          <button id="hqModeBtn" type="button">本部モード</button>
+        </section>
+
+        <section class="panel-section field-only" id="profileSection">
+          <h2>参加者</h2>
+          <div class="field-grid">
+            <label>自治体名<input id="municipalityInput" type="text" autocomplete="organization" value="奈良市" /></label>
+            <label>姓<input id="surnameInput" type="text" autocomplete="family-name" value="山田" /></label>
+            <label>
+              チーム
+              <select id="teamSelect">
+                <option value="team-a">A班 保健師</option>
+                <option value="team-b">B班 保健師</option>
+                <option value="team-c">C班 保健師</option>
+                <option value="hq">本部</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel-section field-only" id="trackingSection">
+          <h2>位置送信</h2>
+          <div class="track-controls">
+            <button class="primary" id="toggleTracking" type="button">活動開始</button>
+            <button id="sendNow" type="button">手動送信</button>
+          </div>
+          <div class="field-grid">
+            <label>
+              更新間隔
+              <select id="intervalSelect">
+                <option value="30000">30秒</option>
+                <option value="60000" selected>1分</option>
+                <option value="180000">3分</option>
+                <option value="300000">5分</option>
+                <option value="0">手動のみ</option>
+              </select>
+            </label>
+            <label>
+              ステータス
+              <select id="statusSelect">
+                <option>移動中</option>
+                <option>訪問中</option>
+                <option>待機中</option>
+                <option>休憩中</option>
+                <option>本部帰着</option>
+                <option>要連絡</option>
+                <option>活動終了</option>
+              </select>
+            </label>
+          </div>
+          <p class="hint">スマホの位置は端末内保存に加え、Supabase設定時は本部画面へリアルタイム同期します。</p>
+        </section>
+
+        <section class="panel-section field-only" id="memoSection">
+          <h2>メモ</h2>
+          <textarea id="memoInput" rows="3" placeholder="例: 避難所へ移動開始。道路混雑あり。"></textarea>
+          <div class="track-controls">
+            <button id="saveMemo" type="button">位置付きメモ</button>
+            <button id="centerMap" type="button">現在地へ</button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h2>本部ビュー</h2>
+          <label class="session-row">訓練セッションID<input id="sessionInput" type="text" value="nara-training-001" /></label>
+          <div class="metric-grid">
+            <div><span id="activeCount">0</span><small>活動中</small></div>
+            <div><span id="staleCount">0</span><small>要確認</small></div>
+            <div><span id="memoCount">0</span><small>メモ</small></div>
+            <div><span id="queuedCount">0</span><small>未同期</small></div>
+            <div><span id="teamCount">0</span><small>チーム</small></div>
+            <div><span id="lastUpdateText">-</span><small>最終更新</small></div>
+          </div>
+          <div class="field-grid">
+            <label>
+              表示チーム
+              <select id="teamFilter">
+                <option value="all">全チーム</option>
+                <option value="team-a">A班 保健師</option>
+                <option value="team-b">B班 保健師</option>
+                <option value="team-c">C班 保健師</option>
+                <option value="hq">本部</option>
+              </select>
+            </label>
+            <label>
+              背景地図
+              <select id="basemapSelect">
+                <option value="osmfj-poi">OSMFJ POI</option>
+                <option value="osm-bright">OSM Bright</option>
+                <option value="gsi-photo">全国最新写真</option>
+              </select>
+            </label>
+            <label class="checkbox-row"><input id="showTracks" type="checkbox" checked />移動履歴</label>
+            <label class="checkbox-row"><input id="showOverturePoi" type="checkbox" />Overture POI</label>
+          </div>
+          <div class="track-controls">
+            <button id="addDemo" type="button">デモ追加</button>
+            <button id="exportCsv" type="button">CSV</button>
+            <button id="exportGeojson" type="button">GeoJSON</button>
+            <button id="exportSvgmap" type="button">SVGMap</button>
+          </div>
+          <p class="hint" id="syncHint">Supabase未設定: この端末内のデータのみ表示しています。</p>
+          <div class="hq-dashboard" id="hqDashboard">
+            <h2>チーム状況</h2>
+            <div id="teamSummaryList" class="summary-list"></div>
+            <h2>要確認</h2>
+            <div id="staleList" class="summary-list"></div>
+          </div>
+        </section>
       </aside>
-      <main class="map-stage"><div id="map" aria-label="奈良県周辺の活動地図"></div><div class="activity-drawer"><div class="drawer-header"><h2>活動ログ</h2><button id="clearDemo" type="button">デモ削除</button></div><ul id="activityList"></ul></div></main>
+
+      <main class="map-stage">
+        <div id="map" aria-label="奈良県周辺の活動地図"></div>
+        <div class="activity-drawer" aria-label="活動ログ">
+          <div class="drawer-header">
+            <h2>活動ログ</h2>
+            <button id="clearDemo" type="button">デモ削除</button>
+          </div>
+          <ul id="activityList"></ul>
+        </div>
+      </main>
     </div>
+
     <script src="https://unpkg.com/maplibre-gl@4.3.2/dist/maplibre-gl.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./app-config.js"></script>
