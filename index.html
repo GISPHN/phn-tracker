@@ -72,7 +72,7 @@
               </select>
             </label>
           </div>
-          <p class="hint">スマホの位置は端末内保存に加え、Supabase設定時は本部画面へリアルタイム同期します。</p>
+          <p class="hint">スマホの位置は端末内保存に加え、同期設定時は本部画面へ反映されます。</p>
         </section>
 
         <section class="panel-section field-only" id="memoSection">
@@ -87,6 +87,7 @@
         <section class="panel-section">
           <h2>本部ビュー</h2>
           <label class="session-row">訓練セッションID<input id="sessionInput" type="text" value="nara-training-001" /></label>
+          <label class="session-row">アクセスコード<input id="accessCodeInput" type="text" inputmode="latin" autocomplete="off" placeholder="自動発行または配布されたコード" /></label>
           <div class="metric-grid">
             <div><span id="activeCount">0</span><small>活動中</small></div>
             <div><span id="staleCount">0</span><small>要確認</small></div>
@@ -118,12 +119,17 @@
             <label class="checkbox-row"><input id="showOverturePoi" type="checkbox" />Overture POI</label>
           </div>
           <div class="track-controls">
+            <button id="createSession" type="button">訓練作成</button>
+            <button id="copyShareLink" type="button">共有URL</button>
+          </div>
+          <p class="hint" id="shareHint"></p>
+          <div class="track-controls">
             <button id="addDemo" type="button">デモ追加</button>
             <button id="exportCsv" type="button">CSV</button>
             <button id="exportGeojson" type="button">GeoJSON</button>
             <button id="exportSvgmap" type="button">SVGMap</button>
           </div>
-          <p class="hint" id="syncHint">Supabase未設定: この端末内のデータのみ表示しています。</p>
+          <p class="hint" id="syncHint">同期未設定: この端末内のデータのみ表示しています。</p>
           <div class="hq-dashboard" id="hqDashboard">
             <h2>チーム状況</h2>
             <div id="teamSummaryList" class="summary-list"></div>
