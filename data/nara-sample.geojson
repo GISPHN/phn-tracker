@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "奈良県 概略対象範囲", "kind": "prototype_area" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[135.52,34.78],[135.62,34.34],[135.88,34.17],[136.12,34.32],[136.03,34.67],[135.78,34.82],[135.52,34.78]]]
+      }
+    }
+  ]
+}
