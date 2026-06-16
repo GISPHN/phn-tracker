@@ -1,0 +1,9 @@
+{
+  "type": "FeatureCollection",
+  "name": "overture-nara-poi-sample",
+  "features": [
+    {"type":"Feature","properties":{"id":"sample-nara-medical-1","theme":"places","type":"place","names":{"primary":"奈良県総合医療センター"},"categories":{"primary":"hospital"},"basic_category":"health_and_medical","confidence":1,"addresses":[{"freeform":"奈良県奈良市七条西町"}]},"geometry":{"type":"Point","coordinates":[135.7819,34.6715]}},
+    {"type":"Feature","properties":{"id":"sample-nara-shelter-1","theme":"places","type":"place","names":{"primary":"奈良県文化会館"},"categories":{"primary":"event_venue"},"basic_category":"arts_and_entertainment","confidence":1,"addresses":[{"freeform":"奈良県奈良市登大路町"}]},"geometry":{"type":"Point","coordinates":[135.8328,34.6854]}},
+    {"type":"Feature","properties":{"id":"sample-kashihara-station","theme":"places","type":"place","names":{"primary":"大和八木駅"},"categories":{"primary":"train_station"},"basic_category":"transportation","confidence":1,"addresses":[{"freeform":"奈良県橿原市内膳町"}]},"geometry":{"type":"Point","coordinates":[135.7926,34.5138]}}
+  ]
+}
