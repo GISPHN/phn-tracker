@@ -1,0 +1,16 @@
+{
+  "name": "GIS-PHN Tracker",
+  "short_name": "GIS-PHN",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8faf8",
+  "theme_color": "#0f5e5e",
+  "description": "奈良県の災害保健師チーム訓練向け位置共有プロトタイプ",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%230f5e5e'/%3E%3Cpath d='M96 26c-31 0-56 25-56 56 0 42 56 84 56 84s56-42 56-84c0-31-25-56-56-56zm0 78a22 22 0 1 1 0-44 22 22 0 0 1 0 44z' fill='white'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
