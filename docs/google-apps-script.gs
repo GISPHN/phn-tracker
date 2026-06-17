@@ -37,6 +37,10 @@ function doGet(e) {
     return output_(createSession_(e), e.parameter.callback);
   }
 
+  if (action === "sessions") {
+    return output_(listSessions_(), e.parameter.callback);
+  }
+
   if (action === "logs") {
     return output_(readLogs_(e), e.parameter.callback);
   }
@@ -69,6 +73,31 @@ function createSession_(e) {
     ok: true,
     sessionId,
     accessCode,
+  };
+}
+
+function listSessions_() {
+  const sessionSheet = getSheet_(SESSION_SHEET_NAME, SESSION_HEADERS);
+  const sessionValues = sessionSheet.getDataRange().getValues();
+  const sessionHeaders = sessionValues.shift() || [];
+  const logCounts = countLogsBySession_();
+
+  const sessions = sessionValues
+    .map(row => Object.fromEntries(sessionHeaders.map((key, index) => [key, row[index]])))
+    .filter(item => String(item.enabled).toUpperCase() !== "FALSE")
+    .map(item => ({
+      session_id: item.session_id,
+      access_code: item.access_code,
+      label: item.label,
+      created_at: item.created_at,
+      log_count: logCounts[item.session_id] || 0,
+    }))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 100);
+
+  return {
+    ok: true,
+    sessions,
   };
 }
 
@@ -128,6 +157,20 @@ function readLogs_(e) {
     sessionId,
     logs,
   };
+}
+
+function countLogsBySession_() {
+  const sheet = getSheet_(LOG_SHEET_NAME, LOG_HEADERS);
+  const values = sheet.getDataRange().getValues();
+  const headers = values.shift() || [];
+  const sessionIndex = headers.indexOf("session_id");
+  if (sessionIndex < 0) return {};
+
+  return values.reduce((counts, row) => {
+    const sessionId = row[sessionIndex];
+    if (sessionId) counts[sessionId] = (counts[sessionId] || 0) + 1;
+    return counts;
+  }, {});
 }
 
 function isValidSession_(sessionId, code) {
