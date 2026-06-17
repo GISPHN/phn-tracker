@@ -1,5 +1,5 @@
 window.GISPHN_CONFIG = {
   mode: "gas-sheet",
-  gasWebAppUrl: "https://script.google.com/macros/s/AKfycbw9nmZvzYeElaqzdJl3o-2QMo3NAw0QPhpCzVZuAXiUJxQc24xNKEckuPkhDzpI9Hzg/exec",
+  gasWebAppUrl: "https://script.google.com/macros/s/AKfycbyMwP-jcVwbzUXRFQCS3F9ZkywDh_SLxduXRLnHy06B8PJQe2KxLquUP1nA1V_PmhEN/exec",
   pollIntervalMs: 30000,
 };
