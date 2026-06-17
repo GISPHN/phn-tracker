@@ -1,4 +1,4 @@
-const CACHE_NAME = "gisphn-tracker-v4";
+const CACHE_NAME = "gisphn-tracker-v5";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,7 +7,6 @@ const ASSETS = [
   "./assets/styles.css",
   "./assets/app.js",
   "./data/nara-sample.geojson",
-  "./data/overture-nara-poi.sample.geojson",
 ];
 
 self.addEventListener("install", (event) => {
