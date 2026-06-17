@@ -14,7 +14,6 @@
       <aside class="control-panel" aria-label="操作パネル">
         <header class="brand">
           <div>
-            <p class="eyebrow">奈良県 訓練セッション</p>
             <h1>GIS-PHN Tracker</h1>
           </div>
           <span class="sync-pill" id="connectionState">起動中</span>
@@ -25,25 +24,37 @@
           <button class="mode-button" id="hqModeBtn" type="button"><span>PC・本部</span>本部モード</button>
         </section>
 
-        <section class="panel-section hq-mode-only hq-setup" id="hqSetupSection">
-          <h2>訓練の開始</h2>
+        <section class="panel-section session-section" id="sessionSection">
+          <h2 class="field-only">参加者登録</h2>
+          <h2 class="hq-mode-only">訓練の開始</h2>
           <label class="session-row">訓練セッションID<input id="sessionInput" type="text" value="nara-training-001" /></label>
-          <label class="session-row">アクセスコード<input id="accessCodeInput" type="text" inputmode="latin" autocomplete="off" placeholder="訓練作成で自動発行" /></label>
-          <div class="track-controls">
-            <button class="primary" id="createSession" type="button">訓練作成</button>
-            <button id="copyShareLink" type="button">共有URL</button>
-          </div>
-          <p class="hint" id="shareHint"></p>
-          <p class="hint" id="syncHint">同期未設定: この端末内のデータのみ表示しています。</p>
-        </section>
-
-        <section class="panel-section field-only" id="profileSection">
-          <h2>参加者</h2>
-          <div class="field-grid">
+          <label class="session-row">アクセスコード<input id="accessCodeInput" type="text" inputmode="latin" autocomplete="off" placeholder="本部から共有されたコード" /></label>
+          <div class="field-grid field-only participant-fields">
             <label>自治体名<input id="municipalityInput" type="text" autocomplete="organization" value="奈良市" /></label>
             <label>姓<input id="surnameInput" type="text" autocomplete="family-name" value="山田" /></label>
             <label>チーム<input id="teamInput" type="text" placeholder="例: 奈良市保健師チーム" /></label>
           </div>
+          <div class="track-controls field-only">
+            <button class="primary" id="registerParticipant" type="button">参加者登録</button>
+          </div>
+          <p class="hint field-only" id="registrationHint">セッションIDとアクセスコードを入力し、参加者登録を押してください。</p>
+          <div class="track-controls hq-mode-only">
+            <button class="primary" id="createSession" type="button">訓練作成</button>
+            <button id="copyShareLink" type="button">共有URL</button>
+          </div>
+          <div class="session-picker hq-mode-only">
+            <label>既存セッション<select id="sessionList"><option value="">読み込み中...</option></select></label>
+            <div class="track-controls">
+              <button id="loadSessionList" type="button">一覧更新</button>
+              <button id="selectSession" type="button">選択して表示</button>
+            </div>
+          </div>
+          <p class="hint hq-mode-only" id="shareHint"></p>
+          <div class="qr-card hq-mode-only" id="qrCard">
+            <div class="qr-frame"><canvas id="shareQr" width="196" height="196" aria-label="参加者共有URLのQRコード"></canvas></div>
+            <p class="hint" id="qrHint">訓練作成後にQRコードを表示します。</p>
+          </div>
+          <p class="hint" id="syncHint">同期未設定: この端末内のデータのみ表示しています。</p>
         </section>
 
         <section class="panel-section field-only" id="trackingSection">
@@ -51,6 +62,10 @@
           <div class="track-controls">
             <button class="primary" id="toggleTracking" type="button">活動開始</button>
             <button id="sendNow" type="button">手動送信</button>
+          </div>
+          <div class="track-controls">
+            <button id="loadNearbyPoi" type="button">周辺POI</button>
+            <button id="clearNearbyPoi" type="button">POI消去</button>
           </div>
           <div class="field-grid">
             <label>
@@ -72,10 +87,12 @@
                 <option>休憩中</option>
                 <option>本部帰着</option>
                 <option>要連絡</option>
+                <option>本日の活動終了</option>
                 <option>活動終了</option>
               </select>
             </label>
           </div>
+          <p class="hint" id="nearbyPoiHint">周辺POIは現在地から半径500mだけ一時表示し、記録には保存しません。</p>
           <p class="hint">スマホの位置は端末内保存に加え、同期設定時は本部画面へ反映されます。</p>
         </section>
 
@@ -101,7 +118,9 @@
           <div class="field-grid">
             <label>
               表示チーム
-              <select id="teamFilter"><option value="all">全チーム</option></select>
+              <select id="teamFilter">
+                <option value="all">全チーム</option>
+              </select>
             </label>
             <label>
               背景地図
@@ -112,7 +131,6 @@
               </select>
             </label>
             <label class="checkbox-row"><input id="showTracks" type="checkbox" checked />移動履歴</label>
-            <label class="checkbox-row"><input id="showOverturePoi" type="checkbox" />Overture POI</label>
           </div>
           <div class="track-controls">
             <button id="addDemo" type="button">デモ追加</button>
@@ -131,6 +149,7 @@
 
       <main class="map-stage">
         <div id="map" aria-label="奈良県周辺の活動地図"></div>
+        <div class="creator-credit">作成者: <a href="https://x.com/GISPHN" target="_blank" rel="noopener noreferrer">GISPHN</a></div>
         <div class="activity-drawer" aria-label="活動ログ">
           <div class="drawer-header">
             <h2>活動ログ</h2>
@@ -142,6 +161,7 @@
     </div>
 
     <script src="https://unpkg.com/maplibre-gl@4.3.2/dist/maplibre-gl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script src="./app-config.js"></script>
     <script type="module" src="./assets/app.js"></script>
   </body>
