@@ -50,6 +50,11 @@ button:hover {
   border-color: #9eb8b4;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 button.primary {
   color: #fff;
   border-color: var(--teal);
@@ -101,7 +106,7 @@ textarea {
 .brand {
   position: sticky;
   top: 0;
-  z-index: 4;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -202,13 +207,38 @@ label {
   display: none;
 }
 
-.hq-setup {
+.session-section {
   border-left: 4px solid var(--teal);
   background: #f2faf8;
 }
 
-.hq-setup .track-controls {
+.session-section .track-controls {
   margin-top: 4px;
+}
+
+.participant-fields {
+  margin-bottom: 12px;
+}
+
+.session-picker {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.qr-card {
+  margin-top: 12px;
+}
+
+.qr-frame {
+  display: grid;
+  place-items: center;
+  width: 216px;
+  max-width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
 }
 
 .checkbox-row {
@@ -329,7 +359,7 @@ body.hq-mode .control-panel {
 .activity-drawer {
   position: absolute;
   right: 16px;
-  bottom: 16px;
+  bottom: 58px;
   z-index: 10;
   width: min(420px, calc(100% - 32px));
   max-height: 38vh;
@@ -338,6 +368,25 @@ body.hq-mode .control-panel {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow);
+}
+
+.creator-credit {
+  position: absolute;
+  right: 16px;
+  bottom: 20px;
+  z-index: 9;
+  padding: 3px 7px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(16, 37, 40, 0.12);
+}
+
+.creator-credit a {
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .drawer-header {
@@ -377,6 +426,10 @@ body.hq-mode .control-panel {
   line-height: 1.4;
 }
 
+#activityList li.empty-log {
+  color: var(--muted);
+}
+
 .log-title {
   display: flex;
   justify-content: space-between;
@@ -387,6 +440,23 @@ body.hq-mode .control-panel {
 .log-meta {
   color: var(--muted);
   font-size: 12px;
+}
+
+.marker-dot {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+.marker-dot.stale {
+  outline: 3px solid rgba(183, 59, 69, 0.35);
 }
 
 .maplibregl-ctrl-group,
@@ -415,8 +485,7 @@ body.hq-mode .control-panel {
     box-shadow: none;
   }
 
-  .brand,
-  .mode-section {
+  .brand {
     position: static;
   }
 
@@ -432,9 +501,14 @@ body.hq-mode .control-panel {
   .activity-drawer {
     left: 10px;
     right: 10px;
-    bottom: 10px;
+    bottom: 50px;
     width: auto;
     max-height: 30vh;
+  }
+
+  .creator-credit {
+    right: 10px;
+    bottom: 10px;
   }
 }
 
