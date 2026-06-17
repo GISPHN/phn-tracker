@@ -37,8 +37,6 @@ Apps Script画面で関数 `setup` を選び、実行します。初回だけGoo
 ```js
 window.GISPHN_CONFIG = {
   mode: "gas-sheet",
-  supabaseUrl: "",
-  supabaseAnonKey: "",
   gasWebAppUrl: "https://script.google.com/macros/s/XXXXX/exec",
   pollIntervalMs: 30000,
 };
@@ -46,7 +44,7 @@ window.GISPHN_CONFIG = {
 
 ## 6. 訓練を作成する
 
-本部画面で `訓練作成` を押すと、訓練セッションIDとアクセスコードが自動発行され、`sessions` シートにも保存されます。
+本部画面で `本部モード` に切り替え、`訓練作成` を押すと、訓練セッションIDとアクセスコードが自動発行され、`sessions` シートにも保存されます。
 
 `共有URL` を押すと、参加者へ配布できるURLをコピーできます。
 
