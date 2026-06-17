@@ -101,7 +101,7 @@ textarea {
 .brand {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -157,6 +157,23 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 9px;
+  position: sticky;
+  top: 65px;
+  z-index: 3;
+  background: rgba(255, 255, 255, 0.97);
+}
+
+.mode-button {
+  min-height: 54px;
+  font-weight: 700;
+}
+
+.mode-button span {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .panel-section h2 {
@@ -179,6 +196,19 @@ label {
 
 .session-row {
   margin-bottom: 12px;
+}
+
+.hq-mode-only {
+  display: none;
+}
+
+.hq-setup {
+  border-left: 4px solid var(--teal);
+  background: #f2faf8;
+}
+
+.hq-setup .track-controls {
+  margin-top: 4px;
 }
 
 .checkbox-row {
@@ -274,6 +304,10 @@ body.hq-mode .field-only {
   display: none;
 }
 
+body.hq-mode .hq-mode-only {
+  display: block;
+}
+
 body.hq-mode .hq-dashboard {
   display: block;
 }
@@ -355,23 +389,6 @@ body.hq-mode .control-panel {
   font-size: 12px;
 }
 
-.marker-dot {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 2px solid #fff;
-  border-radius: 999px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
-}
-
-.marker-dot.stale {
-  outline: 3px solid rgba(183, 59, 69, 0.35);
-}
-
 .maplibregl-ctrl-group,
 .maplibregl-ctrl-attrib {
   border-radius: 6px;
@@ -398,7 +415,8 @@ body.hq-mode .control-panel {
     box-shadow: none;
   }
 
-  .brand {
+  .brand,
+  .mode-section {
     position: static;
   }
 
