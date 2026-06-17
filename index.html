@@ -21,8 +21,20 @@
         </header>
 
         <section class="panel-section mode-section">
-          <button class="primary" id="fieldModeBtn" type="button">現地モード</button>
-          <button id="hqModeBtn" type="button">本部モード</button>
+          <button class="primary mode-button" id="fieldModeBtn" type="button"><span>スマホ</span>現地モード</button>
+          <button class="mode-button" id="hqModeBtn" type="button"><span>PC・本部</span>本部モード</button>
+        </section>
+
+        <section class="panel-section hq-mode-only hq-setup" id="hqSetupSection">
+          <h2>訓練の開始</h2>
+          <label class="session-row">訓練セッションID<input id="sessionInput" type="text" value="nara-training-001" /></label>
+          <label class="session-row">アクセスコード<input id="accessCodeInput" type="text" inputmode="latin" autocomplete="off" placeholder="訓練作成で自動発行" /></label>
+          <div class="track-controls">
+            <button class="primary" id="createSession" type="button">訓練作成</button>
+            <button id="copyShareLink" type="button">共有URL</button>
+          </div>
+          <p class="hint" id="shareHint"></p>
+          <p class="hint" id="syncHint">同期未設定: この端末内のデータのみ表示しています。</p>
         </section>
 
         <section class="panel-section field-only" id="profileSection">
@@ -30,15 +42,7 @@
           <div class="field-grid">
             <label>自治体名<input id="municipalityInput" type="text" autocomplete="organization" value="奈良市" /></label>
             <label>姓<input id="surnameInput" type="text" autocomplete="family-name" value="山田" /></label>
-            <label>
-              チーム
-              <select id="teamSelect">
-                <option value="team-a">A班 保健師</option>
-                <option value="team-b">B班 保健師</option>
-                <option value="team-c">C班 保健師</option>
-                <option value="hq">本部</option>
-              </select>
-            </label>
+            <label>チーム<input id="teamInput" type="text" placeholder="例: 奈良市保健師チーム" /></label>
           </div>
         </section>
 
@@ -86,8 +90,6 @@
 
         <section class="panel-section">
           <h2>本部ビュー</h2>
-          <label class="session-row">訓練セッションID<input id="sessionInput" type="text" value="nara-training-001" /></label>
-          <label class="session-row">アクセスコード<input id="accessCodeInput" type="text" inputmode="latin" autocomplete="off" placeholder="自動発行または配布されたコード" /></label>
           <div class="metric-grid">
             <div><span id="activeCount">0</span><small>活動中</small></div>
             <div><span id="staleCount">0</span><small>要確認</small></div>
@@ -99,13 +101,7 @@
           <div class="field-grid">
             <label>
               表示チーム
-              <select id="teamFilter">
-                <option value="all">全チーム</option>
-                <option value="team-a">A班 保健師</option>
-                <option value="team-b">B班 保健師</option>
-                <option value="team-c">C班 保健師</option>
-                <option value="hq">本部</option>
-              </select>
+              <select id="teamFilter"><option value="all">全チーム</option></select>
             </label>
             <label>
               背景地図
@@ -119,17 +115,11 @@
             <label class="checkbox-row"><input id="showOverturePoi" type="checkbox" />Overture POI</label>
           </div>
           <div class="track-controls">
-            <button id="createSession" type="button">訓練作成</button>
-            <button id="copyShareLink" type="button">共有URL</button>
-          </div>
-          <p class="hint" id="shareHint"></p>
-          <div class="track-controls">
             <button id="addDemo" type="button">デモ追加</button>
             <button id="exportCsv" type="button">CSV</button>
             <button id="exportGeojson" type="button">GeoJSON</button>
             <button id="exportSvgmap" type="button">SVGMap</button>
           </div>
-          <p class="hint" id="syncHint">同期未設定: この端末内のデータのみ表示しています。</p>
           <div class="hq-dashboard" id="hqDashboard">
             <h2>チーム状況</h2>
             <div id="teamSummaryList" class="summary-list"></div>
@@ -152,7 +142,6 @@
     </div>
 
     <script src="https://unpkg.com/maplibre-gl@4.3.2/dist/maplibre-gl.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./app-config.js"></script>
     <script type="module" src="./assets/app.js"></script>
   </body>
