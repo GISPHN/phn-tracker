@@ -1,6 +1,6 @@
 const NARA_CENTER = [135.8048, 34.6851];
-const STORAGE_KEY = "gisphn-tracker-state-v4";
-const QUEUE_KEY = "gisphn-tracker-offline-queue-v2";
+const STORAGE_KEY = "gisphn-tracker-state-v5";
+const QUEUE_KEY = "gisphn-tracker-offline-queue-v3";
 
 const STYLE_CATALOG = {
   "osm-bright": "https://tile.openstreetmap.jp/styles/osm-bright/style.json",
@@ -18,13 +18,8 @@ const STYLE_CATALOG = {
   },
 };
 
-const teams = {
-  "team-a": { name: "A班 保健師", color: "#0f5e5e" },
-  "team-b": { name: "B班 保健師", color: "#2d62a8" },
-  "team-c": { name: "C班 保健師", color: "#8b5b9f" },
-  hq: { name: "本部", color: "#9c6b11" },
-};
-
+const TEAM_COLORS = ["#0f5e5e", "#2d62a8", "#8b5b9f", "#9c6b11", "#217c56", "#b73b45", "#5c6f82"];
+const config = window.GISPHN_CONFIG || {};
 const $ = (selector) => document.querySelector(selector);
 const els = {
   connectionState: $("#connectionState"),
@@ -32,7 +27,7 @@ const els = {
   hqModeBtn: $("#hqModeBtn"),
   municipalityInput: $("#municipalityInput"),
   surnameInput: $("#surnameInput"),
-  teamSelect: $("#teamSelect"),
+  teamInput: $("#teamInput"),
   sessionInput: $("#sessionInput"),
   accessCodeInput: $("#accessCodeInput"),
   toggleTracking: $("#toggleTracking"),
@@ -66,7 +61,6 @@ const els = {
   staleList: $("#staleList"),
 };
 
-const config = window.GISPHN_CONFIG || {};
 let state = loadState();
 let map;
 let naraArea = null;
@@ -109,7 +103,7 @@ function bindEvents() {
   window.addEventListener("offline", updateConnectionState);
   els.fieldModeBtn.addEventListener("click", () => setMode("field"));
   els.hqModeBtn.addEventListener("click", () => setMode("hq"));
-  [els.municipalityInput, els.surnameInput, els.teamSelect, els.sessionInput, els.accessCodeInput].forEach((input) => input.addEventListener("change", () => { saveProfile(); startSync(); render(); }));
+  [els.municipalityInput, els.surnameInput, els.teamInput, els.sessionInput, els.accessCodeInput].forEach((input) => input.addEventListener("change", () => { saveProfile(); startSync(); render(); }));
   els.intervalSelect.addEventListener("change", () => { saveProfile(); if (watchId !== null) restartTracking(); });
   els.statusSelect.addEventListener("change", saveProfile);
   els.toggleTracking.addEventListener("click", toggleTracking);
@@ -137,6 +131,7 @@ function startSync() {
   if (gasPollTimer) window.clearInterval(gasPollTimer);
   if (!isGasMode()) {
     els.syncHint.textContent = "同期未設定: この端末内のデータのみ表示しています。";
+    updateConnectionState();
     return;
   }
   loadGasLogs();
@@ -194,20 +189,14 @@ async function loadGasLogs() {
 }
 
 function syncLog(log) {
-  if (!isGasMode()) {
-    enqueueIfOffline(log);
-    render();
-    return;
-  }
-  const profile = getProfile();
-  if (!profile.accessCode || !navigator.onLine) {
+  if (!isGasMode() || !getProfile().accessCode || !navigator.onLine) {
     enqueueIfOffline(log);
     render();
     return;
   }
   const params = new URLSearchParams({
     action: "append",
-    code: profile.accessCode,
+    code: getProfile().accessCode,
     id: log.id,
     session_id: log.sessionId,
     user_id: log.userId,
@@ -251,7 +240,7 @@ function sheetRowToLog(row) {
     sessionId: row.session_id,
     userId: row.user_id,
     displayName: row.display_name,
-    teamId: row.team_id,
+    teamId: row.team_id || "未設定",
     lat: Number(row.latitude),
     lng: Number(row.longitude),
     accuracy: row.accuracy,
@@ -276,6 +265,7 @@ function setMode(mode) {
   state.profile.mode = mode;
   saveState();
   updateMode();
+  setTimeout(() => map?.resize(), 80);
 }
 
 function updateMode() {
@@ -390,13 +380,14 @@ function addSyntheticLog(message) {
 }
 function addDemoParticipants() {
   const now = Date.now();
-  [["奈良市-佐藤", "team-a", 34.6851, 135.8048], ["橿原市-田中", "team-b", 34.5094, 135.7926], ["天理市-中村", "team-c", 34.5967, 135.8373], ["生駒市-森", "team-a", 34.6919, 135.7006], ["本部-調整", "hq", 34.6858, 135.8327]].forEach(([displayName, teamId, lat, lng], index) => {
+  [["奈良市-佐藤", "奈良市保健師チーム", 34.6851, 135.8048], ["橿原市-田中", "橿原市保健師チーム", 34.5094, 135.7926], ["天理市-中村", "天理市保健師チーム", 34.5967, 135.8373], ["本部-調整", "本部", 34.6858, 135.8327]].forEach(([displayName, teamId, lat, lng], index) => {
     for (let step = 0; step < 4; step += 1) state.logs.push({ id: crypto.randomUUID(), type: "location", source: "demo", sessionId: els.sessionInput.value.trim(), userId: `demo-${index}`, displayName, teamId, lat: round(lat + step * 0.004 + index * 0.001), lng: round(lng + step * 0.003 - index * 0.001), accuracy: 18 + step, status: step === 3 ? "訪問中" : "移動中", memo: step === 3 ? "訓練用メモ: 現地確認中" : "", createdAt: new Date(now - (4 - step) * 60000 - index * 15000).toISOString(), synced: true, demo: true });
   });
   saveState(); render();
 }
 
 function render() {
+  updateTeamFilterOptions();
   if (!map || !map.isStyleLoaded()) { renderMetrics(); renderActivity(); renderDashboard(); return; }
   ensureLayers();
   const selectedTeam = els.teamFilter.value;
@@ -408,23 +399,26 @@ function render() {
   setData("memos", fc(logs.filter((log) => log.type === "memo").map(memoFeature)));
   renderPoi(); renderMetrics(); renderActivity(); renderDashboard();
 }
+function updateTeamFilterOptions() {
+  const current = els.teamFilter.value || "all";
+  const teams = [...new Set(state.logs.map((log) => log.teamId).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ja"));
+  els.teamFilter.innerHTML = `<option value="all">全チーム</option>${teams.map((team) => `<option value="${esc(team)}">${esc(team)}</option>`).join("")}`;
+  els.teamFilter.value = current === "all" || teams.includes(current) ? current : "all";
+}
 function tracks(logs) {
   const features = [];
   groupBy(logs.filter((log) => log.type === "location"), "userId").forEach((items) => {
     const sorted = items.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     if (sorted.length < 2) return;
-    const team = teams[sorted[0].teamId] || teams["team-a"];
-    features.push({ type: "Feature", geometry: { type: "LineString", coordinates: sorted.map((log) => [log.lng, log.lat]) }, properties: { teamColor: team.color } });
+    features.push({ type: "Feature", geometry: { type: "LineString", coordinates: sorted.map((log) => [log.lng, log.lat]) }, properties: { teamColor: teamColor(sorted[0].teamId) } });
   });
   return fc(features);
 }
 function locationFeature(log) {
-  const team = teams[log.teamId] || teams["team-a"];
-  return { type: "Feature", geometry: { type: "Point", coordinates: [log.lng, log.lat] }, properties: { displayName: log.displayName, initials: initials(log.displayName), teamName: team.name, teamColor: team.color, status: log.status || "", accuracy: log.accuracy ?? "", createdAt: formatTime(log.createdAt), stale: Date.now() - new Date(log.createdAt) > 300000 } };
+  return { type: "Feature", geometry: { type: "Point", coordinates: [log.lng, log.lat] }, properties: { displayName: log.displayName, initials: initials(log.displayName), teamName: log.teamId, teamColor: teamColor(log.teamId), status: log.status || "", accuracy: log.accuracy ?? "", createdAt: formatTime(log.createdAt), stale: Date.now() - new Date(log.createdAt) > 300000 } };
 }
 function memoFeature(log) {
-  const team = teams[log.teamId] || teams["team-a"];
-  return { type: "Feature", geometry: { type: "Point", coordinates: [log.lng, log.lat] }, properties: { displayName: log.displayName, memo: log.memo || "", teamColor: team.color, createdAt: formatTime(log.createdAt) } };
+  return { type: "Feature", geometry: { type: "Point", coordinates: [log.lng, log.lat] }, properties: { displayName: log.displayName, memo: log.memo || "", teamColor: teamColor(log.teamId), createdAt: formatTime(log.createdAt) } };
 }
 async function renderPoi() {
   if (!els.showOverturePoi.checked) { setData("poi", fc([])); return; }
@@ -447,9 +441,8 @@ function renderDashboard() {
   const latest = [...latestByUser(state.logs).values()];
   const byTeam = groupBy(latest, "teamId");
   els.teamSummaryList.innerHTML = [...byTeam.entries()].map(([teamId, logs]) => {
-    const team = teams[teamId] || { name: teamId, color: "#334155" };
     const stale = logs.filter((log) => Date.now() - new Date(log.createdAt) > 300000).length;
-    return `<div class="summary-row"><span class="team-dot" style="background:${team.color}"></span><strong>${esc(team.name)}</strong><span>${logs.length}人</span><span>要確認 ${stale}</span></div>`;
+    return `<div class="summary-row"><span class="team-dot" style="background:${teamColor(teamId)}"></span><strong>${esc(teamId)}</strong><span>${logs.length}人</span><span>要確認 ${stale}</span></div>`;
   }).join("") || `<div class="summary-row muted">まだ参加者がありません</div>`;
   const staleLogs = latest.filter((log) => Date.now() - new Date(log.createdAt) > 300000);
   els.staleList.innerHTML = staleLogs.map((log) => `<div class="summary-row"><strong>${esc(log.displayName)}</strong><span>${esc(log.status || "")}</span><span>${elapsedText(log.createdAt)}</span></div>`).join("") || `<div class="summary-row muted">要確認者はいません</div>`;
@@ -457,10 +450,7 @@ function renderDashboard() {
 function renderActivity() {
   const selectedTeam = els.teamFilter.value;
   const logs = state.logs.filter((log) => selectedTeam === "all" || log.teamId === selectedTeam).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 80);
-  els.activityList.innerHTML = logs.map((log) => {
-    const team = teams[log.teamId] || teams["team-a"];
-    return `<li><div class="log-title"><span>${esc(log.displayName)}</span><span style="color:${team.color}">${esc(log.status || log.type)}</span></div><div class="log-meta">${esc(team.name)} / ${formatTime(log.createdAt)} / ${log.lat}, ${log.lng}</div>${log.memo ? `<div>${esc(log.memo)}</div>` : ""}</li>`;
-  }).join("");
+  els.activityList.innerHTML = logs.map((log) => `<li><div class="log-title"><span>${esc(log.displayName)}</span><span style="color:${teamColor(log.teamId)}">${esc(log.status || log.type)}</span></div><div class="log-meta">${esc(log.teamId)} / ${formatTime(log.createdAt)} / ${log.lat}, ${log.lng}</div>${log.memo ? `<div>${esc(log.memo)}</div>` : ""}</li>`).join("");
 }
 
 function centerOnLatest() { const latest = getLatestLog(getProfile().userId); map.flyTo({ center: latest ? [latest.lng, latest.lat] : NARA_CENTER, zoom: latest ? 15 : 10, essential: true }); }
@@ -471,12 +461,12 @@ function exportSvgmap() { download("gisphn-svgmap-layer.svg", "image/svg+xml;cha
 function getProfile() {
   const municipality = els.municipalityInput.value.trim() || "自治体";
   const surname = els.surnameInput.value.trim() || "参加者";
-  return { userId: state.profile.userId, municipality, surname, displayName: `${municipality}-${surname}`, teamId: els.teamSelect.value, basemap: els.basemapSelect.value, showOverturePoi: els.showOverturePoi.checked, sessionId: els.sessionInput.value.trim() || "nara-training-001", accessCode: els.accessCodeInput.value.trim() };
+  return { userId: state.profile.userId, municipality, surname, displayName: `${municipality}-${surname}`, teamId: els.teamInput.value.trim() || "未設定", basemap: els.basemapSelect.value, showOverturePoi: els.showOverturePoi.checked, sessionId: els.sessionInput.value.trim() || "nara-training-001", accessCode: els.accessCodeInput.value.trim() };
 }
 function hydrateProfile() {
   els.municipalityInput.value = state.profile.municipality;
   els.surnameInput.value = state.profile.surname;
-  els.teamSelect.value = state.profile.teamId;
+  els.teamInput.value = state.profile.teamId === "未設定" ? "" : state.profile.teamId;
   els.basemapSelect.value = state.profile.basemap || "osmfj-poi";
   els.showOverturePoi.checked = Boolean(state.profile.showOverturePoi);
   els.sessionInput.value = state.profile.sessionId;
@@ -491,7 +481,7 @@ function saveProfile() {
   saveState(); updateShareHint();
 }
 function loadState() {
-  const fallback = { profile: { userId: crypto.randomUUID(), municipality: "奈良市", surname: "山田", teamId: "team-a", basemap: "osmfj-poi", showOverturePoi: false, mode: "field", sessionId: "nara-training-001", accessCode: "", intervalMs: "60000", status: "移動中" }, logs: [] };
+  const fallback = { profile: { userId: crypto.randomUUID(), municipality: "奈良市", surname: "山田", teamId: "未設定", basemap: "osmfj-poi", showOverturePoi: false, mode: "field", sessionId: "nara-training-001", accessCode: "", intervalMs: "60000", status: "移動中" }, logs: [] };
   try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); return { ...fallback, ...saved, profile: { ...fallback.profile, ...(saved.profile || {}) }, logs: Array.isArray(saved.logs) ? saved.logs : [] }; } catch { return fallback; }
 }
 function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -500,10 +490,11 @@ function loadQueue() { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) |
 function updateConnectionState() { const online = navigator.onLine; const synced = isGasMode(); els.connectionState.textContent = synced ? (online ? "同期接続" : "オフライン") : (online ? "端末内" : "オフライン"); els.connectionState.classList.toggle("online", online && synced); els.connectionState.classList.toggle("offline", !online || !synced); }
 function applyUrlSession() { const params = new URLSearchParams(window.location.search); if (params.get("session")) state.profile.sessionId = params.get("session"); if (params.get("code")) state.profile.accessCode = params.get("code"); }
 async function copyShareLink() { const profile = getProfile(); const url = new URL(window.location.href); url.searchParams.set("session", profile.sessionId); if (profile.accessCode) url.searchParams.set("code", profile.accessCode); const text = url.toString(); try { await navigator.clipboard.writeText(text); els.shareHint.textContent = "共有URLをコピーしました。参加者に配布できます。"; } catch { els.shareHint.textContent = text; } }
-function updateShareHint() { const profile = getProfile(); els.shareHint.textContent = profile.accessCode ? `参加者には訓練ID ${profile.sessionId} とアクセスコードを共有してください。` : "訓練作成を押すと、訓練IDとアクセスコードを自動発行します。"; }
+function updateShareHint() { const profile = getProfile(); els.shareHint.textContent = profile.accessCode ? `参加者には訓練ID ${profile.sessionId} とアクセスコードを共有してください。` : "本部モードで訓練作成を押すと、訓練IDとアクセスコードを自動発行します。"; }
 function latestByUser(logs) { const latest = new Map(); logs.forEach((log) => { if (!Number.isFinite(log.lat) || !Number.isFinite(log.lng)) return; const current = latest.get(log.userId); if (!current || new Date(log.createdAt) > new Date(current.createdAt)) latest.set(log.userId, log); }); return latest; }
 function getLatestLog(userId) { return state.logs.filter((log) => log.userId === userId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]; }
-function groupBy(items, key) { const groups = new Map(); items.forEach((item) => { const id = item[key]; if (!groups.has(id)) groups.set(id, []); groups.get(id).push(item); }); return groups; }
+function groupBy(items, key) { const groups = new Map(); items.forEach((item) => { const id = item[key] || "未設定"; if (!groups.has(id)) groups.set(id, []); groups.get(id).push(item); }); return groups; }
+function teamColor(teamId) { const text = String(teamId || "未設定"); let hash = 0; for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0; return TEAM_COLORS[hash % TEAM_COLORS.length]; }
 function initials(name) { const parts = String(name).split("-"); return (parts[1] || parts[0] || "?").slice(0, 2); }
 function formatTime(value) { return new Intl.DateTimeFormat("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(value)); }
 function elapsedText(value) { const minutes = Math.floor((Date.now() - new Date(value)) / 60000); if (minutes < 1) return "1分未満"; if (minutes < 60) return `${minutes}分前`; return `${Math.floor(minutes / 60)}時間前`; }
